@@ -1,0 +1,24 @@
+{
+        "vin": "VIN00000015",
+        "name": "Mobile SOTA - Android",
+        "phone": "9000000009",
+        "email": "sota-testing@visteon.com",
+        "make": "Mahindra",
+        "model": "W207",
+        "variant": "A",
+        "year": 2015,
+        "this_ecu": "HeadUnit",
+        "sw_path": "/sdcard/mota/",
+        "sw_name": "usb-reflash.tar",
+        "ecus": [
+                {
+                        "ecu_name": "HeadUnit",
+                        "ecu_make": "Visteon",
+                        "serial_no": "ABCD1234",
+                        "sw_version": "3.0.0",
+                        "year": 2015,
+                        "diff_tool": "xdelta delta ",
+                        "patch_tool": "xdelta patch "
+                }
+        ]
+}
