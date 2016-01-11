@@ -8,7 +8,7 @@
         "variant": "A",
         "year": 2015,
         "this_ecu": "HeadUnit",
-        "sw_path": "/sdcard/mota/",
+        "sw_path": "/storage/emulated/0/mota",
         "sw_name": "usb-reflash.tar",
         "ecus": [
                 {

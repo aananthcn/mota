@@ -2,7 +2,6 @@ package com.example.mota;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +32,10 @@ public class FullscreenActivity extends Activity
 {
 	/* Members by Aananth */
 	private Thread mSotaThread;
+	private File mMotaDir;
+	private String mClientInfoFile;
+	private String[] mSotaConf;
+
 	private boolean mSotaThreadActive = false;
 	private boolean mAppActive = false;
 	private boolean mWifiConn = false;
@@ -40,7 +43,8 @@ public class FullscreenActivity extends Activity
 	
 	/* Functions added by Aananth */
 	private native void nativeSotaMain();
-	
+	private native void sendSotaConfigs(int len, String[] vehconf);
+
 	/**
 	 * Whether or not the system UI should be auto-hidden after
 	 * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -141,9 +145,11 @@ public class FullscreenActivity extends Activity
 		findViewById(R.id.dummy_button).setOnTouchListener(
 				mDelayHideTouchListener);
 
-		/* Aananth added the following lines */
-		createTempDir();
-		readClientInfo();
+		
+		/*************************************
+		 * Aananth added the following lines *
+		 *************************************/
+		initSotaClient();
         startSotaThread();
 		mAppActive = true;
 	}
@@ -210,68 +216,31 @@ public class FullscreenActivity extends Activity
         startSotaThread();
 		mAppActive = true;
     }
+
     
-    /* This function creates temp directoy path */
-    private void createTempDir() {
-    	File folder = new File(Environment.getExternalStorageDirectory() + 
-    			File.separator + "mota");
-    	boolean success = true;
+    /*
+    ***************************************************************************
+    * Main SOTA Functions added by Aananth
+    ***************************************************************************
+    */
+    /**************************************************************************
+     * checkForNetworks: Updates global variables if either Wifi or mobile
+     * network is connected */
+    @SuppressWarnings("deprecation")
+	void checkForNetworks() {
+    	ConnectivityManager connMgr = (ConnectivityManager) 
+    	        getSystemService(Context.CONNECTIVITY_SERVICE);
     	
-    	if(folder.exists()) {
-    		return;
-    	}
+    	NetworkInfo networkInfo = connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+    	mWifiConn = networkInfo.isConnected();
     	
-    	success = folder.mkdir();
-    	if(success) {
-				Log.i("MOTA", "Created \"Temp\" directory for MOTA!!");
-    	} else {
-				Log.i("MOTA", "Failed to create \"Temp\" directory for MOTA!!");
-    	}
-    }
-  
-    /* This function reads the client info json file from .apk file and store locally */
-    private void readClientInfo() {
-    	try {
-			FileInputStream fis = openFileInput( "client_info.json" );
-			if(fis.available() > 0) {
-				Log.i("MOTA", "Client Info file already exists!!");
-				return;
-			}
-    	} catch (IOException e1) {
-			Log.i("MOTA", "Client Info file not found!!");
-    		/* 
-    		 * It is normal to get IO Exception for this file at start. The 
-    		 * following section of the code will create it anyway! 
-    		 */
-		}
-    	
-    	/* if the file not found in ./files directory, then read it from .apk file */
-    	try{
-    		InputStream inputStream=this.getAssets().open("client_info.json");
-    		int nBytes = inputStream.available();
-    		byte data[] = new byte[nBytes];
-    		String str = "";
-    		
-    		//read all data from file "hello_world.txt"
-    		while( inputStream.read(data) != -1);
-    		str = new String ( data );
-			Log.i("MOTA", str);
-			
-			FileOutputStream fos = openFileOutput("client_info.json",
-					MODE_PRIVATE);
-			OutputStreamWriter osw = new OutputStreamWriter( fos );
-			// Write the string to the file
-			osw.write ( str );
-			// Flush out anything in buffer
-			osw.flush();
-			osw.close();
-	
-    		inputStream.close();
-    	} catch(IOException e) {
-    		e.printStackTrace();
-    	}
+    	networkInfo = connMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+    	mMobileConn = networkInfo.isConnected();
     }
 
+    
+    /**************************************************************************
+     * startSotaThread: Invokes main thread of SOTA client */
     private void startSotaThread() {
 		if(mSotaThreadActive == false) {
 			mSotaThread = new Thread() {
@@ -280,15 +249,20 @@ public class FullscreenActivity extends Activity
 					int count = 0;
 					
 					// Moves the current Thread into the background
-					android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+					android.os.Process.setThreadPriority(android.os.Process.
+							THREAD_PRIORITY_BACKGROUND);
 
 					while(mAppActive) {
 						Log.i("MOTA", "sotaclient is running!! Count:" + count);
 						
 						checkForNetworks();
-						Log.i("MOTA", "WiFi conn:" + mWifiConn + " Mobile conn:" + mMobileConn);
+						Log.i("MOTA", "WiFi conn:" + mWifiConn + " Mobile conn:"
+						+ mMobileConn);
 						if(mWifiConn || mMobileConn) {
-							nativeSotaMain(); /* main function that will not return until nativeSotaStop() is called */
+							/* The main function of sota client library which will 
+							 * not return until nativeSotaStop() is called */
+							nativeSotaMain();
+							mAppActive = false;
 						}
 						try {
 							sleep(1000);
@@ -307,18 +281,106 @@ public class FullscreenActivity extends Activity
 		}
     }
     
-    @SuppressWarnings("deprecation")
-	void checkForNetworks() {
-    	ConnectivityManager connMgr = (ConnectivityManager) 
-    	        getSystemService(Context.CONNECTIVITY_SERVICE);
+    
+    
+    /**************************************************************************
+     * createMotaDir: This function creates temp directoy path
+     * 
+     *  @return: true if successfully created */
+    private boolean createMotaDir() {
+    	mMotaDir = new File(Environment.getExternalStorageDirectory() + 
+    			File.separator + "mota");
+    	boolean success = true;
     	
-    	NetworkInfo networkInfo = connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-    	mWifiConn = networkInfo.isConnected();
+    	if(mMotaDir.exists()) {
+    		return success;
+    	}
     	
-    	networkInfo = connMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-    	mMobileConn = networkInfo.isConnected();
+    	success = mMotaDir.mkdir();
+    	if(success) {
+				Log.i("MOTA", "Created \"main\" directory for MOTA!! (" + 
+						mMotaDir.toString()+")");
+    	} else {
+				Log.i("MOTA", "Failed to create \"main\" directory for MOTA!!");
+    	}
+    	
+    	return success;
     }
+  
+    /**************************************************************************
+     *  readClientInfo: This function reads the client info json file from .apk 
+     *  file and store locally */
+    private void readClientInfo() {
+		if(!createMotaDir()) {
+			return;
+		}
+    	mClientInfoFile = mMotaDir.toString() + File.separator + "client_info.json";
+		
+    	try {
+    		FileInputStream fis = new FileInputStream(new File(mClientInfoFile));
+    		
+			if(fis.available() > 0) {
+				Log.i("MOTA", "Client Info file already exists!!");
+				fis.close();
+				return;
+			}
+			
+			fis.close();
+    	} catch (IOException e1) {
+			Log.i("MOTA", "Client Info file not found!!");
+    		/* 
+    		 * It is normal to get IO Exception for this file at start. The 
+    		 * following section of the code will create it anyway! 
+    		 */
+		}
+    	
+    	/* if the file not found in ./files directory, then read it from .apk file */
+    	try{
+    		InputStream inputStream=this.getAssets().open("client_info.json");
+    		int nBytes = inputStream.available();
+    		byte data[] = new byte[nBytes];
+    		String str = "";
+    		
+    		/* read all data from file */
+    		while(inputStream.read(data) != -1);
+    		str = new String(data);
+			Log.i("MOTA", str);
+			
+			//FileOutputStream fos = openFileOutput(file, MODE_PRIVATE);
+			FileOutputStream fos = new FileOutputStream(new File(mClientInfoFile));
+			OutputStreamWriter osw = new OutputStreamWriter(fos);
+			osw.write(str);
+			osw.flush();
+			osw.close();
+			fos.close();
+			Log.i("MOTA", "Client info file \"" + mClientInfoFile + "\" created!");
 
+    		inputStream.close();
+    	} catch(IOException e) {
+    		Log.i("MOTA", "Hit an exception while copying client_info.json!");
+    		e.printStackTrace();
+    	}
+    }
+    
+    
+    /**************************************************************************
+     * initSotaClient: initializes SOTA client */
+	private void initSotaClient() {
+		int len = 4;
+		mSotaConf = new String[len];
+
+		/* copy the client info file to the destination path */
+		readClientInfo();
+		
+        mSotaConf[0] = this.getCacheDir().getAbsolutePath()+"/tmp"; /* tmp directory */
+        mSotaConf[1] = this.mMotaDir.toString(); /* main storage directory */
+		mSotaConf[2] = this.mClientInfoFile; /* client_info.json */
+		mSotaConf[3] = "122.165.96.181"; /* server ip */
+        
+        sendSotaConfigs(len, mSotaConf);
+	}
+   
+	
 	static {
 		System.loadLibrary("sotajni");
 		System.loadLibrary("jansson");

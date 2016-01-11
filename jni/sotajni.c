@@ -16,12 +16,7 @@
 #endif
 
 #define VEH_CONF_MAX 6
-#define BASE_FILE_PATH "/sdcard/mota"
-#define VEH_CONFIG_FILE "./files/client_info.json"
-#define SERVER_IP_ADDRESS "122.165.96.181"
-#define CMDLINE_ARGS 7
-
-char VehConf[VEH_CONF_MAX][256];
+char SotaConf[VEH_CONF_MAX][256];
 static JavaVM *java_vm;
 static jstring jmsg;
 
@@ -130,32 +125,36 @@ void create_config_json_file(char *str)
 #endif
 
 
-void receive_veh_configs(JNIEnv *env, jobject thiz, jint len, jobjectArray stringArray)
+void receive_sota_configs(JNIEnv *env, jobject thiz, jint len, jobjectArray stringArray)
 {
 	int i;
 	jstring jstr;
 	const char *nstr;
 
-	__android_log_print (ANDROID_LOG_INFO, "MOTA", "Received %d Vehicle Configuration", len);
+	__android_log_print (ANDROID_LOG_INFO, "MOTA", "Received %d SOTA Configurations", len);
 	for(i = 0; i < len; i++) {
 		jstr = (*env)->GetObjectArrayElement(env, stringArray, i);
 		nstr = (*env)->GetStringUTFChars(env, jstr, NULL);
-		strcpy(VehConf[i], nstr);
-		__android_log_print(ANDROID_LOG_INFO, "MOTA", "%s", VehConf[i]);
+		strcpy(SotaConf[i], nstr);
+		__android_log_print(ANDROID_LOG_INFO, "MOTA", "  %d) %s", i, SotaConf[i]);
 		(*env)->ReleaseStringUTFChars(env, jstr, nstr);
 	}
 
 	//create_config_json_file(VEH_CONFIG_FILE);
 }
 
-#define USE_FORK_IN_ANDROID 0
 
+
+#define USE_FORK_IN_ANDROID 	0
+#define CMDLINE_ARGS 		9
+/******************************************************************************
+ * MOTA NDK main function
+ */
 void sotajni_main(JNIEnv *env, jobject thiz)
 {
 	char **argv;
 	int argc, i;
 	pid_t pid;
-	char pwd[1024];
 
 #if USE_FORK_IN_ANDROID
 	if((pid = fork()) == -1) {
@@ -175,11 +174,13 @@ void sotajni_main(JNIEnv *env, jobject thiz)
 
 		strcpy(argv[0], "motaclient");
 		strcpy(argv[1], "-i");
-		strcpy(argv[2], VEH_CONFIG_FILE);
+		strcpy(argv[2], SotaConf[2]); /* client_info.json */
 		strcpy(argv[3], "-s");
-		strcpy(argv[4], SERVER_IP_ADDRESS); /* Server IP */
+		strcpy(argv[4], SotaConf[3]); /* Server IP */
 		strcpy(argv[5], "-t");
-		strcpy(argv[6], ""); /* tmp files in current folder */
+		strcpy(argv[6], SotaConf[0]); /* tmp files folder */
+		strcpy(argv[7], "-p");
+		strcpy(argv[8], SotaConf[1]); /* main storage folder */
 		argc = CMDLINE_ARGS;
 
 		__android_log_print(ANDROID_LOG_INFO, "MOTA", "Starting sotaclient...");
@@ -195,6 +196,7 @@ void sotajni_main(JNIEnv *env, jobject thiz)
 
 
 static JNINativeMethod native_methods[] = {
+	{ "sendSotaConfigs", "(I[Ljava/lang/String;)V", (void*) receive_sota_configs},
 	{ "nativeSotaMain", "()V", (void*) sotajni_main}
 };
 
