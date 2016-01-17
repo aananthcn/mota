@@ -8,6 +8,7 @@
 #include <string.h>
 #include <jni.h>
 #include <android/log.h>
+#include <pthread.h>
 
 #include "jansson.h"
 
@@ -15,12 +16,15 @@
 #define NULL   ((void *) 0)
 #endif
 
+static JavaVM *java_vm;
+static jobject this_obj;
+static jmethodID set_message_method_id;
+
+
 #define VEH_CONF_MAX 6
 char SotaConf[VEH_CONF_MAX][256];
-static JavaVM *java_vm;
-static jstring jmsg;
-
 extern void main(int, char**);
+
 #if 0
 extern void stop_wikiclient(void);
 extern void new_location_data(double lat, double lon);
@@ -31,33 +35,30 @@ extern char *get_ui_message(void);
 /*##########################################################################
  * Functions
  *##########################################################################*/
+void set_ui_message(const char *msg) {
+	char lmsg[4*1024];
+	JNIEnv *env;
+
+	strcpy(lmsg, msg);
+	if((*java_vm)->GetEnv(java_vm, (void**) &env, JNI_VERSION_1_4) != JNI_OK) {
+		__android_log_print (ANDROID_LOG_ERROR, "MOTA",
+				"Could not retrieve JNIEnv");
+		return;
+	}
+	jstring jmessage = (*env)->NewStringUTF(env, lmsg);
+
+	__android_log_print(ANDROID_LOG_INFO, "MOTA", "%s(): %s", __func__, lmsg);
+
+	(*env)->CallVoidMethod(env, this_obj, set_message_method_id, jmessage);
+	if ((*env)->ExceptionCheck(env)) {
+		(*env)->ExceptionClear(env);
+	}
+
+	(*env)->DeleteLocalRef(env, jmessage);
+}
+
+
 #if 0
-jstring wikijni_get_ui_message(JNIEnv* env, jobject thiz)
-{
-	char *msg;
-
-//	msg = get_ui_message();
-
-	__android_log_print(ANDROID_LOG_INFO, "MOTA", "%s() - msg: %s", __func__, msg);
-	jmsg = (*env)->NewStringUTF(env, msg);
-
-	return jmsg;
-}
-
-
-void wikijni_newlocation(JNIEnv *env, jobject thiz, jdouble lat, jdouble lon)
-{
-	__android_log_print(ANDROID_LOG_INFO, "MOTA", "lat = %lf, lon = %lf", lat, lon);
-//	new_location_data(lat, lon);
-}
-
-
-void wikijni_stop(JNIEnv *env, jobject thiz)
-{
-//	stop_wikiclient();
-}
-
-
 int sj_add_string(json_t **root, char *name, char *value)
 {
         json_t *new;
@@ -146,7 +147,7 @@ void receive_sota_configs(JNIEnv *env, jobject thiz, jint len, jobjectArray stri
 
 
 #define USE_FORK_IN_ANDROID 	0
-#define CMDLINE_ARGS 		9
+#define CMDLINE_ARGS 		11
 /******************************************************************************
  * MOTA NDK main function
  */
@@ -155,6 +156,8 @@ void sotajni_main(JNIEnv *env, jobject thiz)
 	char **argv;
 	int argc, i;
 	pid_t pid;
+
+	this_obj = thiz;
 
 #if USE_FORK_IN_ANDROID
 	if((pid = fork()) == -1) {
@@ -181,6 +184,8 @@ void sotajni_main(JNIEnv *env, jobject thiz)
 		strcpy(argv[6], SotaConf[0]); /* tmp files folder */
 		strcpy(argv[7], "-p");
 		strcpy(argv[8], SotaConf[1]); /* main storage folder */
+		strcpy(argv[9], "-c");
+		sprintf(argv[10], "%ld", (long int)((void *)set_ui_message)); /* call back functions */
 		argc = CMDLINE_ARGS;
 
 		__android_log_print(ANDROID_LOG_INFO, "MOTA", "Starting sotaclient...");
@@ -194,10 +199,26 @@ void sotajni_main(JNIEnv *env, jobject thiz)
 }
 
 
+/* Static class initializer: retrieve method and field IDs */
+static jboolean sota_native_class_init(JNIEnv* env, jclass klass) {
+	set_message_method_id = (*env)->GetMethodID(env, klass, "setSotaMessage", "(Ljava/lang/String;)V");
+
+	if (!set_message_method_id) {
+		/* We emit this message through the Android log instead of the GStreamer log because the later
+		 * has not been initialized yet.
+		 */
+		__android_log_print (ANDROID_LOG_ERROR, "MOTA",
+				"The calling class does not implement all necessary interface methods");
+		return JNI_FALSE;
+	}
+	return JNI_TRUE;
+}
+
 
 static JNINativeMethod native_methods[] = {
 	{ "sendSotaConfigs", "(I[Ljava/lang/String;)V", (void*) receive_sota_configs},
-	{ "nativeSotaMain", "()V", (void*) sotajni_main}
+	{ "nativeSotaMain", "()V", (void*) sotajni_main},
+	{ "nativeClassInit", "()Z", (void*) sota_native_class_init}
 };
 
 
@@ -214,7 +235,6 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 	jclass klass = (*env)->FindClass (env, "com/example/mota/FullscreenActivity");
 	(*env)->RegisterNatives(env, klass, native_methods, sizeof(native_methods)/sizeof(native_methods[0]));
-
 
 	return JNI_VERSION_1_4;
 }

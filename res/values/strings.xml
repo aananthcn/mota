@@ -4,5 +4,7 @@
     <string name="app_name">Mota</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="mota_str">MOTA</string>
+    <string name="msg_str">Welcome to Mobile-update Over The Air</string>
 
 </resources>

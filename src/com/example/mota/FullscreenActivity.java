@@ -21,6 +21,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -35,6 +36,7 @@ public class FullscreenActivity extends Activity
 	private File mMotaDir;
 	private String mClientInfoFile;
 	private String[] mSotaConf;
+	static private String mPrevMsg[];
 
 	private boolean mSotaThreadActive = false;
 	private boolean mAppActive = false;
@@ -42,6 +44,7 @@ public class FullscreenActivity extends Activity
 	private boolean mMobileConn = false;
 	
 	/* Functions added by Aananth */
+	private static native boolean nativeClassInit();
 	private native void nativeSotaMain();
 	private native void sendSotaConfigs(int len, String[] vehconf);
 
@@ -142,8 +145,8 @@ public class FullscreenActivity extends Activity
 		// Upon interacting with UI controls, delay any scheduled hide()
 		// operations to prevent the jarring behavior of controls going away
 		// while interacting with the UI.
-		findViewById(R.id.dummy_button).setOnTouchListener(
-				mDelayHideTouchListener);
+		//findViewById(R.id.dummy_button).setOnTouchListener(
+		//		mDelayHideTouchListener);
 
 		
 		/*************************************
@@ -223,9 +226,27 @@ public class FullscreenActivity extends Activity
     * Main SOTA Functions added by Aananth
     ***************************************************************************
     */
+	/**************************************************************************
+	 * setSotaMessage: will be called by sotaclient to pass display messages
+	 */
+	 void setSotaMessage(final String msg) {
+		final TextView tv = (TextView) this.findViewById(R.id.msg_id);
+		runOnUiThread(new Runnable() {
+			public void run() {
+				tv.setText(mPrevMsg[3]+mPrevMsg[2]+mPrevMsg[1]+mPrevMsg[0] + msg);
+				mPrevMsg[3] = mPrevMsg[2];
+				mPrevMsg[2] = mPrevMsg[1];
+				mPrevMsg[1] = mPrevMsg[0];
+				mPrevMsg[0] = msg;
+			}
+		});
+	}
+   
+	
     /**************************************************************************
      * checkForNetworks: Updates global variables if either Wifi or mobile
-     * network is connected */
+     * network is connected
+     */
     @SuppressWarnings("deprecation")
 	void checkForNetworks() {
     	ConnectivityManager connMgr = (ConnectivityManager) 
@@ -240,7 +261,8 @@ public class FullscreenActivity extends Activity
 
     
     /**************************************************************************
-     * startSotaThread: Invokes main thread of SOTA client */
+     * startSotaThread: Invokes main thread of SOTA client 
+     */
     private void startSotaThread() {
 		if(mSotaThreadActive == false) {
 			mSotaThread = new Thread() {
@@ -286,7 +308,8 @@ public class FullscreenActivity extends Activity
     /**************************************************************************
      * createMotaDir: This function creates temp directoy path
      * 
-     *  @return: true if successfully created */
+     *  @return: true if successfully created 
+     *  */
     private boolean createMotaDir() {
     	mMotaDir = new File(Environment.getExternalStorageDirectory() + 
     			File.separator + "mota");
@@ -309,7 +332,8 @@ public class FullscreenActivity extends Activity
   
     /**************************************************************************
      *  readClientInfo: This function reads the client info json file from .apk 
-     *  file and store locally */
+     *  file and store locally 
+     *  */
     private void readClientInfo() {
 		if(!createMotaDir()) {
 			return;
@@ -364,7 +388,8 @@ public class FullscreenActivity extends Activity
     
     
     /**************************************************************************
-     * initSotaClient: initializes SOTA client */
+     * initSotaClient: initializes SOTA client 
+     * */
 	private void initSotaClient() {
 		int len = 4;
 		mSotaConf = new String[len];
@@ -379,13 +404,21 @@ public class FullscreenActivity extends Activity
         
         sendSotaConfigs(len, mSotaConf);
 	}
-   
 	
+	
+	/**************************************************************************
+	 * static initializer: the first bit that gets executed is the static 
+	 * initializer of the class 
+	 * */
 	static {
 		System.loadLibrary("sotajni");
 		System.loadLibrary("jansson");
 		System.loadLibrary("crypto");
 		System.loadLibrary("ssl");
 		System.loadLibrary("sotaclient");
+		
+		nativeClassInit();
+		
+		mPrevMsg = new String[4];
 	}
 }

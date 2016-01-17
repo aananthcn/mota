@@ -17,7 +17,7 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:keepScreenOn="true"
-        android:text="@string/dummy_content"
+        android:text="@string/mota_str"
         android:textColor="#33b5e5"
         android:textSize="50sp"
         android:textStyle="bold" />
@@ -41,15 +41,20 @@
             android:background="@color/black_overlay"
             android:orientation="horizontal"
             tools:ignore="UselessParent" >
-
-            <Button
-                android:id="@+id/dummy_button"
-                style="?metaButtonBarButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/dummy_button" />
         </LinearLayout>
+
+        <EditText
+            android:id="@+id/msg_id"
+            android:layout_width="match_parent"
+            android:layout_height="175dp"
+            android:ems="10"
+            android:gravity="center_vertical|top"
+            android:inputType="textMultiLine"
+            android:text="@string/msg_str" >
+
+            <requestFocus />
+        </EditText>
+
     </FrameLayout>
 
 </FrameLayout>
