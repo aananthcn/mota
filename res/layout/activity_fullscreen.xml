@@ -46,7 +46,8 @@
         <EditText
             android:id="@+id/msg_id"
             android:layout_width="match_parent"
-            android:layout_height="175dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="33dp"
             android:ems="10"
             android:gravity="center_vertical|top"
             android:inputType="textMultiLine"
@@ -55,6 +56,13 @@
             <requestFocus />
         </EditText>
 
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
     </FrameLayout>
+
 
 </FrameLayout>

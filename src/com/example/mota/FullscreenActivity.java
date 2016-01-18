@@ -12,6 +12,8 @@ import com.example.mota.util.SystemUiHider;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.PorterDuff.Mode;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -21,6 +23,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 /**
@@ -37,6 +40,8 @@ public class FullscreenActivity extends Activity
 	private String mClientInfoFile;
 	private String[] mSotaConf;
 	static private String mPrevMsg[];
+	private ProgressBar mProgress;
+	private int mProgressPercent;
 
 	private boolean mSotaThreadActive = false;
 	private boolean mAppActive = false;
@@ -155,6 +160,8 @@ public class FullscreenActivity extends Activity
 		initSotaClient();
         startSotaThread();
 		mAppActive = true;
+		mProgress = (ProgressBar) findViewById(R.id.progressBar);
+		mProgress.getProgressDrawable().setColorFilter(Color.YELLOW, Mode.SRC_IN);
 	}
 
 	@Override
@@ -233,11 +240,27 @@ public class FullscreenActivity extends Activity
 		final TextView tv = (TextView) this.findViewById(R.id.msg_id);
 		runOnUiThread(new Runnable() {
 			public void run() {
-				tv.setText(mPrevMsg[3]+mPrevMsg[2]+mPrevMsg[1]+mPrevMsg[0] + msg);
+				tv.setText(mPrevMsg[14]+mPrevMsg[13]+mPrevMsg[12]+mPrevMsg[11]+
+						mPrevMsg[10]+mPrevMsg[9]+mPrevMsg[8]+mPrevMsg[7]+
+						mPrevMsg[6]+mPrevMsg[5]+mPrevMsg[4]+mPrevMsg[3]+
+						mPrevMsg[2]+mPrevMsg[1]+mPrevMsg[0] + msg);
+				mPrevMsg[14] = mPrevMsg[14];
+				mPrevMsg[13] = mPrevMsg[13];
+				mPrevMsg[12] = mPrevMsg[12];
+				mPrevMsg[11] = mPrevMsg[11];
+				mPrevMsg[10] = mPrevMsg[9];
+				mPrevMsg[9] = mPrevMsg[8];
+				mPrevMsg[8] = mPrevMsg[7];
+				mPrevMsg[7] = mPrevMsg[6];
+				mPrevMsg[6] = mPrevMsg[5];
+				mPrevMsg[5] = mPrevMsg[4];
+				mPrevMsg[4] = mPrevMsg[3];
 				mPrevMsg[3] = mPrevMsg[2];
 				mPrevMsg[2] = mPrevMsg[1];
 				mPrevMsg[1] = mPrevMsg[0];
 				mPrevMsg[0] = msg;
+				
+				mProgress.setProgress(mProgressPercent++);
 			}
 		});
 	}
@@ -283,7 +306,9 @@ public class FullscreenActivity extends Activity
 						if(mWifiConn || mMobileConn) {
 							/* The main function of sota client library which will 
 							 * not return until nativeSotaStop() is called */
+							mProgressPercent = 10;
 							nativeSotaMain();
+							mProgressPercent = 100;
 							mAppActive = false;
 						}
 						try {
@@ -419,6 +444,6 @@ public class FullscreenActivity extends Activity
 		
 		nativeClassInit();
 		
-		mPrevMsg = new String[4];
+		mPrevMsg = new String[15];
 	}
 }
