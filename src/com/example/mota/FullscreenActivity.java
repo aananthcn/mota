@@ -441,6 +441,8 @@ public class FullscreenActivity extends Activity
 		System.loadLibrary("crypto");
 		System.loadLibrary("ssl");
 		System.loadLibrary("sotaclient");
+		System.loadLibrary("tar");
+		System.loadLibrary("bz");
 		
 		nativeClassInit();
 		

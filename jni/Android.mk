@@ -35,6 +35,16 @@ LOCAL_SRC_FILES:= libs/libssl.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE:= tar
+LOCAL_SRC_FILES:= libs/libtar.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE:= bz
+LOCAL_SRC_FILES:= libs/libbz.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
 LOCAL_MODULE:= sotaclient
 LOCAL_SRC_FILES:= libs/libsotaclient.so
 include $(PREBUILT_SHARED_LIBRARY)
