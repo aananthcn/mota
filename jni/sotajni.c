@@ -47,7 +47,7 @@ void set_ui_message(const char *msg) {
 	}
 	jstring jmessage = (*env)->NewStringUTF(env, lmsg);
 
-	__android_log_print(ANDROID_LOG_INFO, "MOTA", "%s(): %s", __func__, lmsg);
+	//__android_log_print(ANDROID_LOG_INFO, "MOTA", "%s(): %s", __func__, lmsg);
 
 	(*env)->CallVoidMethod(env, this_obj, set_message_method_id, jmessage);
 	if ((*env)->ExceptionCheck(env)) {

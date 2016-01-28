@@ -244,10 +244,10 @@ public class FullscreenActivity extends Activity
 						mPrevMsg[10]+mPrevMsg[9]+mPrevMsg[8]+mPrevMsg[7]+
 						mPrevMsg[6]+mPrevMsg[5]+mPrevMsg[4]+mPrevMsg[3]+
 						mPrevMsg[2]+mPrevMsg[1]+mPrevMsg[0] + msg);
-				mPrevMsg[14] = mPrevMsg[14];
-				mPrevMsg[13] = mPrevMsg[13];
-				mPrevMsg[12] = mPrevMsg[12];
-				mPrevMsg[11] = mPrevMsg[11];
+				mPrevMsg[14] = mPrevMsg[13];
+				mPrevMsg[13] = mPrevMsg[12];
+				mPrevMsg[12] = mPrevMsg[11];
+				mPrevMsg[11] = mPrevMsg[10];
 				mPrevMsg[10] = mPrevMsg[9];
 				mPrevMsg[9] = mPrevMsg[8];
 				mPrevMsg[8] = mPrevMsg[7];
@@ -443,6 +443,9 @@ public class FullscreenActivity extends Activity
 		System.loadLibrary("sotaclient");
 		System.loadLibrary("tar");
 		System.loadLibrary("bz");
+		System.loadLibrary("z");
+		System.loadLibrary("glib-2.0");
+		System.loadLibrary("xdelta");
 		
 		nativeClassInit();
 		
