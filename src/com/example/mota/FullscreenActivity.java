@@ -240,10 +240,17 @@ public class FullscreenActivity extends Activity
 		final TextView tv = (TextView) this.findViewById(R.id.msg_id);
 		runOnUiThread(new Runnable() {
 			public void run() {
-				tv.setText(mPrevMsg[14]+mPrevMsg[13]+mPrevMsg[12]+mPrevMsg[11]+
+				tv.setText(mPrevMsg[19]+
+						mPrevMsg[18]+mPrevMsg[17]+mPrevMsg[16]+mPrevMsg[15]+
+						mPrevMsg[14]+mPrevMsg[13]+mPrevMsg[12]+mPrevMsg[11]+
 						mPrevMsg[10]+mPrevMsg[9]+mPrevMsg[8]+mPrevMsg[7]+
 						mPrevMsg[6]+mPrevMsg[5]+mPrevMsg[4]+mPrevMsg[3]+
 						mPrevMsg[2]+mPrevMsg[1]+mPrevMsg[0] + msg);
+				mPrevMsg[19] = mPrevMsg[18];
+				mPrevMsg[18] = mPrevMsg[17];
+				mPrevMsg[17] = mPrevMsg[16];
+				mPrevMsg[16] = mPrevMsg[15];
+				mPrevMsg[15] = mPrevMsg[14];
 				mPrevMsg[14] = mPrevMsg[13];
 				mPrevMsg[13] = mPrevMsg[12];
 				mPrevMsg[12] = mPrevMsg[11];
@@ -260,7 +267,10 @@ public class FullscreenActivity extends Activity
 				mPrevMsg[1] = mPrevMsg[0];
 				mPrevMsg[0] = msg;
 				
-				mProgress.setProgress(mProgressPercent++);
+				mProgressPercent += 2;
+				if(mProgressPercent >= 100)
+					mProgressPercent = 100;
+				mProgress.setProgress(mProgressPercent);
 			}
 		});
 	}
@@ -432,32 +442,6 @@ public class FullscreenActivity extends Activity
         sendSotaConfigs(len, mSotaConf);
 	}
 	
-	/**************************************************************************
-	 * UNTAR
-	 */
-	private void untarForReflash(File tarFile, File destFolder) {
-		TarInputStream tis = new TarInputStream(new BufferedInputStream(new FileInputStream(tarFile))); 
-		TarEntry entry; 
-		
-		while((entry = tis.getNextEntry()) != null) { 
-			int count; 
-			byte data[] = new byte[2048];
-
-		  FileOutputStream fos = new FileOutputStream(destFolder + "/" + entry.getName());
-		  BufferedOutputStream dest = new BufferedOutputStream(fos);
-
-		  while((count = tis.read(data)) != -1) {
-		     dest.write(data, 0, count);
-		  }
-
-		  dest.flush();
-		  dest.close();
-
-		}
-
-		tis.close();
-	}
-	
 	
 	/**************************************************************************
 	 * static initializer: the first bit that gets executed is the static 
@@ -477,6 +461,7 @@ public class FullscreenActivity extends Activity
 		
 		nativeClassInit();
 		
-		mPrevMsg = new String[15];
+		mPrevMsg = new String[20];
+		java.util.Arrays.fill(mPrevMsg, 0, 19, "");
 	}
 }
