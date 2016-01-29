@@ -29,7 +29,7 @@
 							<tool id="org.eclipse.cdt.build.core.settings.holder.614768160" name="GNU C" superClass="org.eclipse.cdt.build.core.settings.holder">
 								<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.262690788" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/home/caananth/tools/android-ndk-r10e/platforms/android-19/arch-arm/usr/include"/>
-									<listOptionValue builtIn="false" value="/home/caananth/android-builds/jansson-2.7/jni/src"/>
+									<listOptionValue builtIn="false" value="/home/caananth/tools/android-armeabi/usr/include"/>
 								</option>
 								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1802862817" languageId="org.eclipse.cdt.core.gcc" languageName="GNU C" sourceContentType="org.eclipse.cdt.core.cSource,org.eclipse.cdt.core.cHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 							</tool>

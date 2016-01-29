@@ -10,7 +10,6 @@
 #include <android/log.h>
 #include <pthread.h>
 
-#include "jansson.h"
 
 #ifndef NULL
 #define NULL   ((void *) 0)
@@ -24,12 +23,6 @@ static jmethodID set_message_method_id;
 #define VEH_CONF_MAX 6
 char SotaConf[VEH_CONF_MAX][256];
 extern void main(int, char**);
-
-#if 0
-extern void stop_wikiclient(void);
-extern void new_location_data(double lat, double lon);
-extern char *get_ui_message(void);
-#endif
 
 
 /*##########################################################################
@@ -47,7 +40,9 @@ void set_ui_message(const char *msg) {
 	}
 	jstring jmessage = (*env)->NewStringUTF(env, lmsg);
 
-	//__android_log_print(ANDROID_LOG_INFO, "MOTA", "%s(): %s", __func__, lmsg);
+#if DEBUG
+	__android_log_print(ANDROID_LOG_INFO, "MOTA", "%s(): %s", __func__, lmsg);
+#endif
 
 	(*env)->CallVoidMethod(env, this_obj, set_message_method_id, jmessage);
 	if ((*env)->ExceptionCheck(env)) {
@@ -57,73 +52,6 @@ void set_ui_message(const char *msg) {
 	(*env)->DeleteLocalRef(env, jmessage);
 }
 
-
-#if 0
-int sj_add_string(json_t **root, char *name, char *value)
-{
-        json_t *new;
-
-        new = json_pack("{\nss\n}", name, value);
-        if(new  == NULL)
-                return -1;
-
-        return json_object_update(*root, new);
-}
-
-
-/*************************************************************************
- * function: sj_store_file
- *
- * This function stores the data in RAM pointed by json_t* to the storage
- * media path passed as argument
- *
- * arg1: file path
- * arg2: json_t pointer
- *
- * return: positive or negative number
- */
-int sj_store_file(json_t *root, char *file)
-{
-        int flags, ret;
-
-        if(!file) {
-                __android_log_print(ANDROID_LOG_ERROR, "MOTA",
-                		"%s(), invalid file passed!\n", __FUNCTION__);
-                return -1;
-        }
-
-        /* dump to a temporary file */
-        flags = JSON_INDENT(8);
-        ret = json_dump_file(root, file, flags);
-        if(ret < 0) {
-                __android_log_print(ANDROID_LOG_ERROR, "MOTA",
-                		"%s(), json_dump failed!\n", __FUNCTION__);
-                return -1;
-        }
-
-        __android_log_print(ANDROID_LOG_INFO, "MOTA", "Successfully stored %s", file);
-
-        return 1;
-}
-
-
-void create_config_json_file(char *str)
-{
-	json_t *jp;
-
-	jp = json_object();
-
-        sj_add_string(&jp, "vin", VehConf[0]);
-        sj_add_string(&jp, "name", VehConf[1]);
-        sj_add_string(&jp, "phone", VehConf[2]);
-        sj_add_string(&jp, "email", VehConf[3]);
-
-        sj_store_file(jp, str);
-        json_decref(jp);
-
-        __android_log_print(ANDROID_LOG_INFO, "MOTA", "executing %s", __func__);
-}
-#endif
 
 
 void receive_sota_configs(JNIEnv *env, jobject thiz, jint len, jobjectArray stringArray)
@@ -140,8 +68,6 @@ void receive_sota_configs(JNIEnv *env, jobject thiz, jint len, jobjectArray stri
 		__android_log_print(ANDROID_LOG_INFO, "MOTA", "  %d) %s", i, SotaConf[i]);
 		(*env)->ReleaseStringUTFChars(env, jstr, nstr);
 	}
-
-	//create_config_json_file(VEH_CONFIG_FILE);
 }
 
 

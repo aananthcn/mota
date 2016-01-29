@@ -341,12 +341,14 @@ public class FullscreenActivity extends Activity
     	boolean success = true;
     	
     	if(mMotaDir.exists()) {
-    		return success;
+    			mMotaDir.setWritable(true, false);
+    			return success;
     	}
     	
     	success = mMotaDir.mkdir();
     	if(success) {
-				Log.i("MOTA", "Created \"main\" directory for MOTA!! (" + 
+    			mMotaDir.setWritable(true, false);
+	   			Log.i("MOTA", "Created \"main\" directory for MOTA!! (" + 
 						mMotaDir.toString()+")");
     	} else {
 				Log.i("MOTA", "Failed to create \"main\" directory for MOTA!!");
@@ -428,6 +430,32 @@ public class FullscreenActivity extends Activity
 		mSotaConf[3] = "122.165.96.181"; /* server ip */
         
         sendSotaConfigs(len, mSotaConf);
+	}
+	
+	/**************************************************************************
+	 * UNTAR
+	 */
+	private void untarForReflash(File tarFile, File destFolder) {
+		TarInputStream tis = new TarInputStream(new BufferedInputStream(new FileInputStream(tarFile))); 
+		TarEntry entry; 
+		
+		while((entry = tis.getNextEntry()) != null) { 
+			int count; 
+			byte data[] = new byte[2048];
+
+		  FileOutputStream fos = new FileOutputStream(destFolder + "/" + entry.getName());
+		  BufferedOutputStream dest = new BufferedOutputStream(fos);
+
+		  while((count = tis.read(data)) != -1) {
+		     dest.write(data, 0, count);
+		  }
+
+		  dest.flush();
+		  dest.close();
+
+		}
+
+		tis.close();
 	}
 	
 	
